@@ -8,6 +8,7 @@ the same thing regardless of where the data came from.
 from __future__ import annotations
 
 import json
+import os
 import time
 import urllib.error
 import urllib.parse
@@ -27,10 +28,29 @@ class FetchError(Exception):
     pass
 
 
-def _get(url: str, log=None, retries: int = 3):
+REDDIT_AUTH_HELP = """Reddit's public .json endpoints no longer serve
+unauthenticated clients, so this is a permanent condition rather than a
+transient one: retrying, waiting, or changing the User-Agent will not help.
+Reading public posts now requires OAuth.
+
+To collect from Reddit:
+
+  1. Create an app at https://www.reddit.com/prefs/apps — choose type "script".
+  2. Export the credentials it gives you:
+
+       export REDDIT_CLIENT_ID=...        # under the app name
+       export REDDIT_CLIENT_SECRET=...    # the "secret" field
+
+The free tier allows roughly 100 requests per minute, which is far more than this
+tool will ever use. Hacker News needs no credentials and is unaffected."""
+
+
+def _get(url: str, log=None, retries: int = 3, headers: dict | None = None):
     if log is not None:
         log.endpoint(url)
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    sent = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    sent.update(headers or {})
+    request = urllib.request.Request(url, headers=sent)
     last = None
     for attempt in range(retries):
         try:
@@ -40,6 +60,10 @@ def _get(url: str, log=None, retries: int = 3):
             last = exc
             # 429 and 5xx are worth waiting out; a 403 or 404 will not improve.
             if exc.code not in (429, 500, 502, 503, 504):
+                if exc.code == 403 and "reddit.com" in url:
+                    raise FetchError(
+                        "Reddit refused the request (HTTP 403).\n\n"
+                        + REDDIT_AUTH_HELP) from exc
                 raise FetchError("HTTP %s for %s" % (exc.code, url)) from exc
             time.sleep(2 ** attempt)
         except Exception as exc:                      # network-level failure
@@ -90,7 +114,7 @@ def hn_threads(query: str, since: str | None, until: str | None, limit: int,
         time.sleep(PAUSE_SECONDS)
 
     stories = stories[:limit]
-    log.stage("stories matched by search", len(stories))
+    log.stage("stories matched by %r" % query, len(stories))
 
     threads = []
     for story in stories:
@@ -138,15 +162,55 @@ def _walk_hn(node: dict, thread_id: str, depth: int, out: list[Row]) -> None:
 
 
 # --------------------------------------------------------------------------
-# Reddit, via the public .json endpoints
+# Reddit, via the OAuth API
+#
+# The public www.reddit.com/*.json endpoints this adapter originally used now
+# return 403 to every unauthenticated client, browser User-Agent or not. That is
+# not a rate limit and it does not recover, so the adapter authenticates instead
+# of pretending. Credentials come from the environment and are never written to
+# the sampling log.
 # --------------------------------------------------------------------------
+
+REDDIT_TOKEN_URL = "https://www.reddit.com/api/v1/access_token"
+REDDIT_API = "https://oauth.reddit.com"
+
+
+def reddit_token() -> str:
+    """Application-only OAuth token, or a FetchError explaining how to get one."""
+    client_id = os.environ.get("REDDIT_CLIENT_ID")
+    secret = os.environ.get("REDDIT_CLIENT_SECRET")
+    if not client_id or not secret:
+        raise FetchError(
+            "Reddit needs credentials: REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET "
+            "are not set.\n\n" + REDDIT_AUTH_HELP)
+
+    import base64
+    basic = base64.b64encode(("%s:%s" % (client_id, secret)).encode()).decode()
+    request = urllib.request.Request(
+        REDDIT_TOKEN_URL,
+        data=urllib.parse.urlencode({"grant_type": "client_credentials"}).encode(),
+        headers={"User-Agent": USER_AGENT, "Authorization": "Basic " + basic},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            token = json.loads(response.read().decode("utf-8")).get("access_token")
+    except urllib.error.HTTPError as exc:
+        raise FetchError(
+            "Reddit rejected those credentials (HTTP %s). Check that the app at "
+            "https://www.reddit.com/prefs/apps is of type \"script\", and that "
+            "REDDIT_CLIENT_ID is the string under the app name rather than its "
+            "title." % exc.code) from exc
+    if not token:
+        raise FetchError("Reddit returned no access token.")
+    return token
+
 
 def reddit_threads(query: str, subreddit: str | None, since: str | None, until: str | None,
                    limit: int, with_comments: bool, log) -> list[dict]:
     log.caveat(
-        "Reddit's public endpoints are rate-limited and increasingly restricted; a "
-        "run that returns nothing may be a block rather than an empty result. Check "
-        "the errors section before concluding the topic is not discussed."
+        "Reddit was read through the authenticated API. Private, quarantined and "
+        "banned subreddits are invisible to it, as is anything removed before "
+        "collection — so absence here is not evidence of absence."
     )
     log.caveat(
         "Reddit search does not reliably honour date bounds. Any date filtering "
@@ -154,8 +218,8 @@ def reddit_threads(query: str, subreddit: str | None, since: str | None, until: 
         "actually removed."
     )
 
-    base = "https://www.reddit.com"
-    path = "/r/%s/search.json" % subreddit if subreddit else "/search.json"
+    auth = {"Authorization": "Bearer " + reddit_token()}
+    path = "/r/%s/search" % subreddit if subreddit else "/search"
     params = {"q": query, "limit": "100", "sort": "relevance", "raw_json": "1"}
     if subreddit:
         params["restrict_sr"] = "1"
@@ -165,7 +229,7 @@ def reddit_threads(query: str, subreddit: str | None, since: str | None, until: 
         page = dict(params)
         if after:
             page["after"] = after
-        data = _get(base + path + "?" + urllib.parse.urlencode(page), log)
+        data = _get(REDDIT_API + path + "?" + urllib.parse.urlencode(page), log, headers=auth)
         children = data.get("data", {}).get("children", [])
         if not children:
             break
@@ -176,14 +240,15 @@ def reddit_threads(query: str, subreddit: str | None, since: str | None, until: 
         time.sleep(PAUSE_SECONDS)
 
     posts = posts[:limit]
-    log.stage("posts matched by search", len(posts))
+    log.stage("posts matched by %r" % query, len(posts))
 
     threads = []
     for post in posts:
         thread = {"post": post, "comments": None}
         if with_comments:
             try:
-                listing = _get(base + "/comments/%s.json?raw_json=1&limit=500" % post["id"], log)
+                listing = _get(REDDIT_API + "/comments/%s?raw_json=1&limit=500" % post["id"],
+                               log, headers=auth)
                 thread["comments"] = listing[1] if len(listing) > 1 else None
             except FetchError as exc:
                 log.error("could not fetch comments for post %s: %s" % (post["id"], exc))

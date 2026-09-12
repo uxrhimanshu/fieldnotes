@@ -165,7 +165,7 @@ class CovArgs(Args):
     since = "2023-01-01"
 
 log5 = SamplingLog("hn", "q", {}, "test")
-fieldnotes._check_coverage(list(rows), CovArgs(), [1, 2], log5)
+fieldnotes._check_coverage(list(rows), CovArgs(), [1, 2], log5, "q")
 check("hitting --limit is reported as truncation",
       any("truncated" in c for c in log5.caveats), log5.caveats[-2:])
 check("a since/observed gap is named as an artefact, not a finding",
@@ -177,12 +177,12 @@ class RoomArgs(Args):
     since = "2023-01-01"
 
 log6 = SamplingLog("hn", "q", {}, "test")
-fieldnotes._check_coverage(list(rows), RoomArgs(), [1, 2], log6)
+fieldnotes._check_coverage(list(rows), RoomArgs(), [1, 2], log6, "q")
 check("a corpus under the limit is not flagged as truncated",
       not any("truncated" in c for c in log6.caveats))
 
 log7 = SamplingLog("hn", "q", {}, "test")
-fieldnotes._check_coverage([], CovArgs(), [], log7)
+fieldnotes._check_coverage([], CovArgs(), [], log7, "q")
 check("an empty result is reported as a result, not silence",
       any("returned nothing" in c for c in log7.caveats), log7.caveats[-1])
 
@@ -215,7 +215,7 @@ log4.error("could not fetch comments for story 999: HTTP 503")
 
 rec = log4.record(rows)
 check("the log records the query and parameters",
-      rec["query"] == "alert fatigue" and rec["parameters"]["since"] == "2024-01-01")
+      rec["queries"] == ["alert fatigue"] and rec["parameters"]["since"] == "2024-01-01")
 check("query-string noise is stripped from endpoints",
       rec["endpoints"] == ["https://hn.algolia.com/api/v1/search_by_date"], rec["endpoints"])
 check("the funnel keeps its stages in order",
@@ -259,7 +259,172 @@ with tempfile.TemporaryDirectory() as tmp:
     log4.write_json(json_path, rows)
     loaded = json.load(open(json_path, encoding="utf-8"))
     check("the json log parses and matches the record",
-          loaded["query"] == "alert fatigue" and loaded["tool"] == "fieldnotes")
+          loaded["queries"] == ["alert fatigue"] and loaded["tool"] == "fieldnotes")
+
+
+# --------------------------------------------------------------------------
+# several queries, one corpus
+#
+# A study needs more than one search term, and merging separate runs by hand
+# would leave the corpus with no single log that accounts for it. So the merge
+# happens inside the tool, and the funnel has to stay arithmetically honest
+# across it.
+# --------------------------------------------------------------------------
+
+def _fake_source(by_query):
+    """A fetcher that returns canned rows per query, in the SOURCES shape."""
+    def fetch(query, since, until, limit, with_comments, log):
+        log.endpoint("https://example.test/search?q=" + query)
+        return [{"q": query}]
+
+    def to_rows(threads):
+        out = []
+        for thread in threads:
+            out.extend(by_query[thread["q"]])
+        return out
+    return fetch, to_rows
+
+
+def _row(item_id, text="a comment long enough to survive the length filter"):
+    return Row(thread_id="t" + item_id, item_id=item_id, parent_id="", depth=1,
+               kind="comment", author="someone", created_utc="2025-06-01T00:00:00Z",
+               score=5, title="", text=text, permalink="https://example.test/" + item_id)
+
+
+class MultiArgs(Args):
+    source = "fake"
+    subreddit = None
+    limit = 50
+    no_comments = False
+    real_names = False
+    query = ["warning", "certificate"]
+
+
+shared = _row("200")
+fieldnotes.SOURCES = dict(fieldnotes.SOURCES, fake=_fake_source({
+    "warning": [_row("100"), shared],
+    "certificate": [shared, _row("300")],       # 200 is returned by both
+}))
+
+with tempfile.TemporaryDirectory() as tmp:
+    margs = MultiArgs()
+    margs.out = tmp
+    code = fieldnotes.build(margs, "python3 fieldnotes.py fake warning certificate")
+    check("a multi-query run completes", code == 0)
+
+    record = json.load(open(os.path.join(tmp, "sampling-log.json"), encoding="utf-8"))
+    check("the log keeps every query searched, not just the first",
+          record["queries"] == ["warning", "certificate"], record["queries"])
+
+    funnel = {s["stage"]: s["items"] for s in record["funnel"]}
+    check("each query's own yield is recorded",
+          funnel["retrieved for query 'warning'"] == 2
+          and funnel["retrieved for query 'certificate'"] == 2, funnel)
+
+    dupes = {e["reason"]: e["count"] for e in record["exclusions"]}
+    check("an item returned by two queries is counted once and the repeat logged",
+          dupes.get("already retrieved under an earlier query") == 1, dupes)
+
+    # The check a hostile reader runs first: does the funnel add up, in order?
+    per_query = sum(v for k, v in funnel.items() if k.startswith("retrieved for query"))
+    check("the per-query yields sum to items retrieved",
+          per_query == funnel["items retrieved (posts + comments)"], funnel)
+    check("items retrieved minus every exclusion equals items included",
+          funnel["items retrieved (posts + comments)"] - sum(dupes.values())
+          == funnel["items included in corpus"], (funnel, dupes))
+
+    md = open(os.path.join(tmp, "SAMPLING.md"), encoding="utf-8").read()
+    check("the markdown log lists all the queries, including in the merged case",
+          "`warning`" in md and "`certificate`" in md, md[:400])
+
+# the relevance screen: the thread is retrieved, the item is analysed
+class ScreenArgs(Args):
+    query = ["certificate warning"]
+    items_must_match = True
+
+
+screen_rows = [
+    Row(thread_id="t1", item_id="s1", parent_id="", depth=0, kind="post",
+        author="a", created_utc="2025-01-01T00:00:00Z", score=1,
+        title="Launch HN: something entirely unrelated", text="a" * 200,
+        permalink="p"),
+    Row(thread_id="t1", item_id="c1", parent_id="s1", depth=1, kind="comment",
+        author="b", created_utc="2025-01-01T00:00:00Z", score=1, title="",
+        text="I clicked past the certificate warning because the deploy was blocked.",
+        permalink="p"),
+    Row(thread_id="t1", item_id="c2", parent_id="s1", depth=1, kind="comment",
+        author="c", created_utc="2025-01-01T00:00:00Z", score=1, title="",
+        text="Unrelated reply about the pricing page and nothing else at all here.",
+        permalink="p"),
+]
+log9 = SamplingLog("hn", ["certificate warning"], {}, "test")
+screened = fieldnotes._filter(list(screen_rows), ScreenArgs(), log9)
+kept_ids = {r.item_id for r in screened}
+check("an item that mentions no query term is screened out",
+      kept_ids == {"c1"}, kept_ids)
+check("the screen is named in the log rather than applied silently",
+      any(e["reason"] == "does not mention any query term" and e["count"] == 2
+          for e in log9.exclusions), log9.exclusions)
+check("the screen is off unless asked for",
+      len(fieldnotes._filter(list(screen_rows), Args(), SamplingLog("hn", "q", {}, "t"))) == 3)
+
+log8 = SamplingLog("hn", ["a", "b"], {}, "test")
+check("a list of queries and a bare string are both accepted",
+      log8.queries == ["a", "b"] and SamplingLog("hn", "a", {}, "t").queries == ["a"])
+
+
+# --------------------------------------------------------------------------
+# Reddit needs credentials now, and has to say so
+#
+# The public .json endpoints started returning 403 to every unauthenticated
+# client. A bare "HTTP 403" reads as a transient block and invites a retry that
+# will never succeed, so the error has to name the cause and the fix.
+# --------------------------------------------------------------------------
+
+import urllib.error
+
+
+def _raise_403(*_a, **_k):
+    raise urllib.error.HTTPError("https://oauth.reddit.com/search", 403, "Forbidden", {}, None)
+
+
+_real_urlopen = sources.urllib.request.urlopen
+sources.urllib.request.urlopen = _raise_403
+try:
+    sources._get("https://oauth.reddit.com/search?q=x")
+    check("a Reddit 403 is raised, not swallowed", False)
+except sources.FetchError as exc:
+    message = str(exc)
+    check("a Reddit 403 explains the cause rather than repeating the status code",
+          "OAuth" in message and "prefs/apps" in message, message[:120])
+    check("it says the condition is permanent, so nobody retries it forever",
+          "permanent" in message, message[:120])
+except Exception as exc:
+    check("a Reddit 403 is raised, not swallowed", False, repr(exc))
+finally:
+    sources.urllib.request.urlopen = _real_urlopen
+
+_saved = {k: os.environ.pop(k, None) for k in ("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET")}
+try:
+    sources.reddit_token()
+    check("missing Reddit credentials fail before any request is made", False)
+except sources.FetchError as exc:
+    check("missing Reddit credentials fail before any request is made",
+          "REDDIT_CLIENT_ID" in str(exc))
+finally:
+    for k, v in _saved.items():
+        if v is not None:
+            os.environ[k] = v
+
+sources.urllib.request.urlopen = _raise_403
+try:
+    sources._get("https://hn.algolia.com/api/v1/search?query=x")
+    check("a non-Reddit 403 still fails", False)
+except sources.FetchError as exc:
+    check("the Reddit advice is not attached to unrelated 403s",
+          str(exc).startswith("HTTP 403 for") and "prefs/apps" not in str(exc), str(exc))
+finally:
+    sources.urllib.request.urlopen = _real_urlopen
 
 
 # --------------------------------------------------------------------------

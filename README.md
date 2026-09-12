@@ -117,10 +117,29 @@ corpus, and delete it when the study closes. It is gitignored here.
 | | |
 |---|---|
 | `hn` | Hacker News via the Algolia API. Open, no auth, reliable. |
-| `reddit` | The public `.json` endpoints. No auth, but increasingly rate-limited — a run returning nothing may be a block rather than an empty result, so check the errors section of the log before concluding anything. |
+| `reddit` | The OAuth API. **Needs credentials** — see below. |
 
-Requests are deliberately unhurried. This tool is for building a few hundred rows
-for a study, not for mirroring a site.
+### Reddit needs credentials now
+
+This adapter used to read Reddit's public `.json` endpoints. Those endpoints now
+return **HTTP 403 to every unauthenticated client**, browser User-Agent or not. It
+is not a rate limit and it does not recover.
+
+So reading Reddit means registering a script app at
+[reddit.com/prefs/apps](https://www.reddit.com/prefs/apps) and exporting two
+variables:
+
+```sh
+export REDDIT_CLIENT_ID=...
+export REDDIT_CLIENT_SECRET=...
+```
+
+Without them the tool says exactly that, rather than reporting a bare `HTTP 403`
+that reads like a transient block and invites a retry that can never succeed.
+Hacker News is unaffected and needs nothing.
+
+Requests to either source are deliberately unhurried. This tool is for building a
+few hundred rows for a study, not for mirroring a site.
 
 ## Options
 
@@ -132,6 +151,7 @@ for a study, not for mirroring a site.
 --min-length CHARS   drop comments shorter than this
 --min-score N        drop comments below this score
 --max-depth N        drop replies nested deeper than this
+--items-must-match   keep only items that mention a query term
 --real-names         keep real handles
 --out DIR            output directory (default ./corpus)
 ```
@@ -139,10 +159,43 @@ for a study, not for mirroring a site.
 Every filter reports its own drop separately. "487 items excluded" is not a method;
 "412 below 80 characters, 75 below score 2" is.
 
+### Several queries, one corpus
+
+Give more than one search term and each is searched separately and merged:
+
+```sh
+python3 fieldnotes.py hn "alert fatigue" "warning fatigue" --out corpus/
+```
+
+The log records each query's own yield and counts anything the second query
+already collected as `already retrieved under an earlier query`. This exists
+because the alternative — running the tool several times and concatenating the
+CSVs — leaves a corpus that no single log accounts for, which is the one thing
+this tool is for.
+
+### The thread is retrieved; the item is analysed
+
+Search matches whole threads, so a thread that mentions your topic once arrives
+with every reply attached, including the ones about pricing. In a real run on
+security-warning talk that was most of the corpus: Launch HN posts matched on a
+phrase buried in a long blurb, and dragged ninety off-topic comments in with them.
+
+`--items-must-match` keeps only items that mention one of your query terms. It is
+a blunt screen and it is deliberately blunt — it is mechanical, reproducible from
+the command line alone, and counted in the log as
+`does not mention any query term`, which is not true of deciding item by item
+afterwards which ones felt relevant.
+
+A thread's title is copied onto its comments *after* the screen runs, so a quote
+keeps its context without one on-topic headline re-admitting the whole thread.
+
 ## What this deliberately will not do
 
-- **No authentication, ever.** It reads what a logged-out visitor can read. Private
-  subreddits, DMs and members-only forums are out of scope by design.
+- **Nothing that isn't public.** It reads what any visitor can read. Private
+  subreddits, DMs and members-only forums are out of scope by design. This used to
+  be stated as "no authentication, ever" — Reddit ended that by closing its
+  logged-out endpoints, so the rule is now about *what* is read rather than about
+  credentials.
 - **No mirroring.** The rate limiting is not configurable upward.
 - **No sentiment scores, no topic models, no LLM summarisation.** It builds the
   corpus; the interpretation is yours, and it should be visible in your codebook
@@ -162,7 +215,7 @@ does not know your obligations.
 python3 test_fieldnotes.py
 ```
 
-47 cases, no framework, no network — everything runs against fixtures. A test suite
+62 cases, no framework, no network — everything runs against fixtures. A test suite
 that needs a live API fails for reasons unrelated to the code.
 
 ---

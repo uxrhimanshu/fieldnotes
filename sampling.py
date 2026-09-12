@@ -32,9 +32,12 @@ UNIVERSAL_CAVEATS = [
 
 
 class SamplingLog:
-    def __init__(self, source: str, query: str, parameters: dict, command: str) -> None:
+    def __init__(self, source, queries, parameters: dict, command: str) -> None:
         self.source = source
-        self.query = query
+        # A run may search several terms and merge the results into one corpus.
+        # The log keeps them as a list so a reader can see the whole search, not
+        # just the term that happened to be typed first.
+        self.queries = [queries] if isinstance(queries, str) else list(queries)
         self.parameters = parameters
         self.command = command
         self.started = datetime.now(timezone.utc)
@@ -51,6 +54,8 @@ class SamplingLog:
         three endpoints a reader actually needs to know were hit.
         """
         base = re.sub(r"/\d+(?=/?$)", "/{id}", url.split("?")[0])
+        # Reddit's ids are base36, so the numeric rule above misses them.
+        base = re.sub(r"(/comments)/[^/]+$", r"\1/{id}", base)
         if base not in self.endpoints:
             self.endpoints.append(base)
 
@@ -85,7 +90,7 @@ class SamplingLog:
             "run_at": self.started.isoformat(),
             "command": self.command,
             "source": self.source,
-            "query": self.query,
+            "queries": self.queries,
             "parameters": self.parameters,
             "endpoints": self.endpoints,
             "funnel": [{"stage": n, "items": c} for n, c in self.stages],
@@ -124,7 +129,16 @@ class SamplingLog:
 
         out.append("\n## What was asked for\n")
         out.append("- **Source:** %s" % d["source"])
-        out.append("- **Query:** `%s`" % (d["query"] or "(none)"))
+        queries = d["queries"]
+        if len(queries) == 1:
+            out.append("- **Query:** `%s`" % (queries[0] or "(none)"))
+        else:
+            out.append("- **Queries:** %s" % ", ".join("`%s`" % q for q in queries))
+            out.append(
+                "  <br>Searched separately and merged into one corpus. A term that "
+                "matched nothing still appears above, because the terms that failed "
+                "are part of the search."
+            )
         for key in sorted(p):
             if p[key] not in (None, "", False):
                 out.append("- **%s:** %s" % (key.replace("_", " ").capitalize(), p[key]))
