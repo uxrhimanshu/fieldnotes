@@ -1,0 +1,347 @@
+thread_id,item_id,parent_id,depth,kind,author,created_utc,score,title,text,permalink
+46383076,46383076,,0,post,A36,2025-12-25T08:47:04Z,1,Ask HN: Would you trust software to automatically move and optimize your money?,"Hi HN,
+
+I’m building a consumer fintech product that acts like an autonomous financial copilot.
+
+The idea is simple in theory: instead of dashboards, alerts, or budgeting tools that require constant user input, the system actually executes financial actions on the user’s behalf, e.g. moving cash between accounts, optimizing savings, allocating funds, and automating routine financial decisions.
+
+The goal is to reduce financial decision fatigue. Most people know what they should do with money, but not consistently due to time, stress, or complexity.
+
+Would love to get feedback and please do be harsh as possible when you're giving one.
+
+Thanks.",https://news.ycombinator.com/item?id=46383076
+46383076,46384136,46383076,1,comment,A37,2025-12-25T12:57:04Z,0,,"> The idea is simple in theory
+
+Unfortunately it is very difficult in practice. And a wise person once said:
+ “Theory and practice sometimes clash. And when that happens, theory loses. Every single time.”
+
+The problem will become thorny when you consider what can be automated vs. what can't be, and what should be vs. what shouldn't. IOW, what do you consider a ""routine decision"".. after all it is subjective.
+
+It is completely unreasonable to expect that people will give you their money and then never want to control it in some way. In fact, it's a contradiction really.
+
+So I certainly applaud you for considering the problem and more so if you make an attempt at some implementation. However, it is a bit like asking ""will AI become self-aware and make humans obsolete"". For the foreseeable future people will not relinquish the ability to somehow ""pull the plug"".",https://news.ycombinator.com/item?id=46384136
+46383076,46388558,46383076,1,comment,A38,2025-12-26T02:04:09Z,0,,"Short answer:
+Never
+
+Why you might think this good idea. LLMS are great at discussing best practices. I could probably improve my financial health by 20% by asking for and following best practices advice.
+
+Why I’d never put it in control: LLMs are shit at doing things right the first time, dealing with the unexpected, dealing with the real world.
+
+If you haven’t had an LLM make catastrophic, terrible and insane mistakes you haven’t been using it enough to see how it can go wrong and have no business either making or using AI for anything important.",https://news.ycombinator.com/item?id=46388558
+46776065,46776065,,0,post,A35,2026-01-27T06:00:43Z,3,"A Lightweight, Non-Intrusive Approach to Website Monitoring (Ops Perspective)","I’m a Linux ops engineer working in the DevOps/SRE space. and over the past few months, I’ve been working on a small *website monitoring* side project in my spare time:
+ https://inostop.com/en/
+
+Most of the monitoring and ops tools I’ve built before were used internally within companies. This is my first attempt to turn a relatively complete tool into something publicly usable.
+
+In day-to-day operations, website monitoring usually involves:
+
+- Infrastructure monitoring
+- Application / API monitoring
+- Partial CDN monitoring
+
+These are often built on top of tools like Prometheus or Zabbix, combined with log systems (ELK / OpenObserve) and distributed tracing (OpenTelemetry).
+ While powerful, this stack can feel *heavyweight and overkill* when you just want to quickly monitor a website’s availability.
+
+That led me to experiment with a simpler approach:
+
+- Non-intrusive (no code changes required/Sidecar)
+- Out-of-band probing to estimate website availability
+- Conservative thresholds to reduce false alarms
+
+So far, the project covers:
+
+- Domain and TLS certificate monitoring, Ping, Telnet checks
+- Basic alert thresholds and multi-stage alert silencing to reduce alert fatigue
+
+There are still open challenges:
+
+- There’s still room to improve the UX of the Website Monitoring results (backend is written in Go).
+
+- AI currently works only as an analysis layer on collected data, rather than actively performing real network probes
+
+This project is still evolving (I’ve rewritten parts of it more times than I’d like to admit ).
+
+If you’d like to try it out, there’s an early access code *95f40841e4888668c4d5f7e88506075d*, valid for 1 months, mainly for collecting early feedback.
+
+I’d love to hear feedback from the community:
+
+- Does a lightweight, non-intrusive website monitoring approach make sense in practice?
+- Are there better patterns or architectures worth exploring?
+- If you’re a QA or test engineer, I’d love to hear your thoughts.",https://news.ycombinator.com/item?id=46776065
+47104548,47104548,,0,post,A34,2026-02-21T20:45:06Z,1,Why optimizing AUC may be insufficient for clinical deterioration systems,"Medical ML research and competitions often optimize ROC-AUC as the primary performance metric.
+
+However, in real hospital environments, the central question is not classification accuracy — it is escalation timing.
+
+In deterioration detection systems:
+ • A noisy alert creates alarm fatigue.
+ • A late alert costs lives.
+ • A static classifier may fail to reflect dynamic physiology.
+
+I’ve been exploring a framework that introduces:
+ • Dual-threshold activation (high/low)
+ • Temporal stability validation
+ • False-alarm suppression logic
+ • Governed escalation timing
+
+The aim is to shift from probability scoring toward structured decision triggering.
+
+I’m curious how others here would approach modeling escalation timing in a clinically responsible way.
+
+Would love perspectives from ML engineers and clinicians.",https://news.ycombinator.com/item?id=47104548
+48195021,48195021,,0,post,A8,2026-05-19T15:54:06Z,74,Show HN: Superlog (YC P26) – Observability that installs itself and fixes bugs,"Hey HN, we’re Nico and Arseniy, co-founders of Superlog (https://superlog.sh). We're building a self-installing, self healing observability tool meant not to be opened. It has a wizard that daily sets up proper logging and an agent that investigates errors and opens PRs.
+
+Super short demo: https://www.youtube.com/watch?v=xFhU9Mk247M.
+
+In our earlier startups, we tried Sentry, Datadog, Grafana, Dash0, and nothing was good enough. Proper telemetry and alerting still requires a ton of manual setup. We struggled with adding good logs, so debugging was tough, especially as codebases grow at a faster pace. Meanwhile, the Datadog/Dash0 bill kept climbing, and we still spent engineering hours to learn, configure, and maintain our observability tooling.
+
+With Sentry, we found ourselves flooded by a stream of alerts into our Slack channel, most were duplicates or lacked context, so alert fatigue/constant interrupts were a real pain. The #ops notification is consistently the worst feeling on a Saturday morning
+
+We’ve seen too many times servers run out of memory and disk, and three AWS metrics giving us three different values. Half of the graphs on dashboards are normally empty or outdated, and manually clicking through UIs, especially when the team is small, seems like a huge waste of time.
+
+At some point we realized that solving this problem would be more valuable than the things we had been working on, and we had the expertise to do it, since Arseniy had spent years at Datadog, getting paged during the night to debug production incidents. So we decided to build a platform that would just work: agent-first, MCP-native, zero-setup.
+
+Here’s how Superlog works: we have a wizard that scans your repo, and automatically instruments it with well-structured logs, traces and metrics via OpenTelemetry. We make sure to highlight main failure modes, endpoint performance, usage per tenant, and LLM/upstream cost (by callsite, tenant and model).
+
+Errors get fingerprinted and grouped into incidents, so you see one issue, not a thousand duplicates. When you get a notification from Superlog, you see a clear failure summary, its inferred severity and impact upfront.
+
+Then the agent investigates and tries to solve the issue. If it has enough context, it produces a concise and tested PR. If it doesn't, it posts its findings for the investigating team, and automatically pulls in the engineers that could contribute more context based on documentation, previous investigations and Slack threads.
+
+Either way the output is one clean PR per incident, posted in Slack, that you can
+merge, ignore, or open as a Claude Code session and modify.
+
+Three things we think are different from other observability vendors:
+
+(1) We solve the setup pain. The wizard will instrument everything with native OTel SDKs, respecting the semantic conventions, with proper service and environment tagging. We’re also working on native automatic dashboards and alerts, so that you can see what’s going on in a glance and don’t miss subtle failure modes.
+
+(2) Our telemetry doesn’t decay. The wizard runs daily, and keeps adding logs, alerts and dashboards where it’s needed. You don't have to remember to instrument new features. The next time something breaks, the data you need to debug it is already there.
+
+(3) Our goal is to solve alert fatigue. We use agents to merge similar errors and refine the summaries, giving you relevant information upfront. We have a custom evaluation setup that makes sure that our summaries are dense and correct, and severity and impact is on point. We also give you confidence scores for every LLM-enhanced metric so that wrong guesses don’t get boosted.
+
+Important: superlog telemetry is vendor-neutral, so you keep all the logs/metrics/traces we install. Pricing is on the site. We're early, so expect rough edges and please tell us when you find them.
+
+You can try it at https://superlog.sh. We'd love to hear what you're using today, what's broken about it, and whether the ""one mergeable PR per incident"" model sounds useful or terrifying. Especially keen to hear from folks running integration-heavy products, anyone who's rolled their own observability, and anyone who has tried Sentry / Datadog MCPs and given up. Comments and feedback welcome!",https://news.ycombinator.com/item?id=48195021
+48195021,48195557,48195021,1,comment,A10,2026-05-19T16:30:01Z,0,,"There's very few startups that I look at these days and don't think to myself, ""I could just write a Claude skill for that"". This one seems pretty cool. Congrats on launch",https://news.ycombinator.com/item?id=48195557
+48195021,48195611,48195021,1,comment,A11,2026-05-19T16:34:08Z,0,,"Love the concept! Some feedback: I went to sign up to give it a go, but the set up process left me feeling a bit untrusting - so I backed out for now. I'd prefer more explanation about what to expect, what I will get, how it is safe, etc before asking me to run a prompt.",https://news.ycombinator.com/item?id=48195611
+48195021,48195848,48195021,1,comment,A12,2026-05-19T16:49:23Z,0,,I would love to try it but I got stuck when it asked for Slack since I dont use that.,https://news.ycombinator.com/item?id=48195848
+48195021,48195892,48195611,2,comment,A9,2026-05-19T16:51:27Z,0,,"Thank you! Very good point.
+
+Right now, the prompt will enumerate all the services and install the OpenTelemetry SDK (https://opentelemetry.io/) in each service.
+
+Then for every service, the skill will make sure that:
+
+- Every time something breaks and an operator needs to take a look, there's an error log
+- All important steps in a process emit info/debug logs (so that an issue can be investigated)
+- Operations are covered with spans with relevant attributes.
+- Cost (LLM tokens), API performance (latency/RED), tenant activity (cost/usage per tenant) are covered by metrics so that you can use Superlog MCP to build cool dashboards.
+
+For most common stacks like NextJS, FastAPI, React Native/Expo etc. we have a custom skill that explains the best practices for this specific technology. For all the other stacks we ask the agent to use general best practices.
+
+We have evals for all custom skills where we start from a starter project, run the agent with the skill and use LLM-as-a-judge to compare it to a human-written 'golden patch'.
+
+In general, we try to:
+
+- minimize diff, so that the instrumentation is easy to review
+- make small chunks of additive diffs vs huge indents / moving logic around
+- minimize new dependencies
+- use well-supported and audited OTel SDKs vs custom libs
+
+You can read the skills here: https://github.com/superloglabs/skills.
+
+I'll make sure to add this to our landing and print this out as the agent writes the code!
+
+Thank you for the feedback!",https://news.ycombinator.com/item?id=48195892
+48195021,48195927,48195848,2,comment,A9,2026-05-19T16:54:12Z,0,,"Hm, sorry about that!
+
+I made the Slack onboarding step mandatory for now since we thought that a lot of our value was in sending investigations and PRs, and Slack was what we used ourselves.
+
+What tool do you use for communication around your project? If you don't want to share publicly, could you please shoot a line to:
+
+ash [at] superlog.sh?
+
+Would love to learn about your usecase in more detail too!",https://news.ycombinator.com/item?id=48195927
+48195021,48195945,48195021,1,comment,A14,2026-05-19T16:55:32Z,0,,"Interesting project - but you need to add some information on where the data goes. As far as I can tell, code goes to some upstream ai provider (for installing, for analyzing).
+
+Telemetry goes to some provider or local hosted solution? And then to your upstream ai provider for analysis?",https://news.ycombinator.com/item?id=48195945
+48195021,48196025,48195021,1,comment,A15,2026-05-19T17:01:38Z,0,,This is a very interesting idea and im excited to see where this goes. Congrats!,https://news.ycombinator.com/item?id=48196025
+48195021,48196038,48195927,3,comment,A13,2026-05-19T17:02:31Z,0,,I don’t use Slack either. What about solo indie founders who don’t use “team communication”?,https://news.ycombinator.com/item?id=48196038
+48195021,48196172,48195945,2,comment,A9,2026-05-19T17:12:54Z,0,,"Thanks for the feedback!
+
+When you're installing Superlog, you can use any coding agent you'd like, including a local model.
+
+Your telemetry then goes into our data stores, and right now we have one DC on the US west coast.
+
+Whenever there's an error log or trace, Superlog can analyze it and prepare a resolution PR (or a note if something needs to be done manually).
+
+This can be turned off and then the incident can be sent to your own models via a webhook.
+
+We use one of the frontier models for that (it's an upstream AI provider). We're working on our own fine-tuned version of a SoTA model to minimize dependency on other AI providers.
+
+To investigate an incident, we clone the repo in our worker, and pass the repository files to a coding agent in a sandbox. The agent has an MCP that gives it access to the telemetry (logs/metrics/traces) of the project.
+
+The coding agent will then investigate the incident and prepare a patch. It hands over the patch via a tool. The worker then deterministically pushes the patch to a branch and opens the PR.
+
+This way the agent doesn't have full Git access and can't do anything it's not supposed to do in the repository.",https://news.ycombinator.com/item?id=48196172
+48195021,48196189,48195021,1,comment,A16,2026-05-19T17:14:07Z,0,,"Congrats on the launch, this looks very promising. I hadn't seen any installation that uses a URL to point to a skill, seems like an evolution of wizard scripts
+
+That been said for more complex setups like on kubernetes where you need a collector and an operator I found OTEL to be super painful to setup a couple of years ago. Has it gotten any easier now?",https://news.ycombinator.com/item?id=48196189
+48195021,48196194,48195927,3,comment,A12,2026-05-19T17:14:33Z,0,,"Lots of places use various slack alternatives or teams/google.
+
+For my current project I would use webhooks/email just like I do currently for my monitoring and alerting.",https://news.ycombinator.com/item?id=48196194
+48195021,48196226,48196038,4,comment,A9,2026-05-19T17:16:14Z,0,,"Got it! What channel would you prefer instead? Would Telegram/WhatsApp/Signal/iMessage be good?
+
+The platform itself doesn't need Slack to function, we just observed that users got more value if they could get notifications somehow, so I'm more than happy to add more comms platforms :)",https://news.ycombinator.com/item?id=48196226
+48195021,48196293,48195021,1,comment,A17,2026-05-19T17:21:27Z,0,,"Sorry to be crude, but this sounds either dead on arrival, or at least needing a pivot, or a rephrasing of the pitch:
+
+The moment something changes the system, it no longer observes it, in fact observing something might cause it to change ( https://en.wikipedia.org/wiki/Observer_effect_(physics) )
+
+Either it's a tool for observing or it's a tool for fixing issues, it cannot be both, by physical principle.
+
+Best case scenario here is that the product succeeds, and then you need to instrument the product itself in order to observe it, like debugging the debugger. But it wouldn't be an observability tool, it would shift the product that needs to be observed from the previous source code that is now a target language into the new source code that is now your product.",https://news.ycombinator.com/item?id=48196293
+48195021,48196395,48195021,1,comment,A20,2026-05-19T17:29:55Z,0,,"on your pricing page:
+
+> Start with one repo. Price the rest when the signal is real.
+
+which makes it sound like possibly the $150/mo price is per-repo?
+
+I think that could use some clarification - if I have 10 services in a monorepo vs 10 individual service repos, does that 10x my cost?",https://news.ycombinator.com/item?id=48196395
+48195021,48196628,48195021,1,comment,A21,2026-05-19T17:47:39Z,0,,"I love the launch! Automated observability that feeds back into the product development process is the future of this category vs having to spend a lot of time configuring and managing the infrastructure yourself.
+
+It's something we've thought a lot about at Amplitude. We'd love to talk.",https://news.ycombinator.com/item?id=48196628
+48195021,48196680,48196293,2,comment,A18,2026-05-19T17:51:16Z,0,,"How does a grep or read affect the observing system?
+
+I guess the change in voltages, arrangement of registers, filling of buffers in the network stack are changing but... what?",https://news.ycombinator.com/item?id=48196680
+48195021,48196775,48195021,1,comment,A22,2026-05-19T17:57:11Z,0,,"The typical issues I have seen with LLMs / Agents tend to be reactive in their fixes. So they tend to ""patch"" the symptom more than ""fix"" the root cause. Interested to see how you solve this problem.",https://news.ycombinator.com/item?id=48196775
+48195021,48196934,48196395,2,comment,A9,2026-05-19T18:07:04Z,0,,"Very good point, thank you! Let me remove this phrase, you're right, it's misleading.
+
+The pricing is only by usage (traces/logs/metrics) and investigation credits. We don't charge extra for repos :)",https://news.ycombinator.com/item?id=48196934
+48195021,48197078,48195557,2,comment,A9,2026-05-19T18:15:58Z,0,,Thank you! super happy that's how you feel about Superlog. Let us know if you want to try it out and/or have any feedback :),https://news.ycombinator.com/item?id=48197078
+48195021,48197295,48196775,2,comment,A9,2026-05-19T18:29:42Z,0,,"You're right! It's a big issue and I don't think there's a silver bullet.
+
+We have an eval suite with code+telemetry fixtures and a golden RCA+patches and an LLM-as-a-Judge. So whenever we get feedback from our users and they're OK with it, we use their feedback to create an eval case (it's still quite manual since you have to calibrate the case).
+
+We use Superlog to observe Superlog, so I often extract cases from our own errors. The PRs get better and better, but, of course, it's sort of a continuous improvement process.",https://news.ycombinator.com/item?id=48197295
+48195021,48197543,48195021,1,comment,A23,2026-05-19T18:46:34Z,0,,"investigation is the hard part, not generating patches. we've had prod issues where the fix was obvious once you knew the cause, but finding the cause meant connecting an error trace to a config change from 3 deploys ago. if the MCP only surfaces traces and logs from one service the agent is going to propose workarounds instead of actual fixes. how deep does the investigation context actually go?",https://news.ycombinator.com/item?id=48197543
+48195021,48198174,48197543,2,comment,A9,2026-05-19T19:26:04Z,0,,"Great question! The investigation agent has access to all the telemetry - not only one service. So we can actually trace the root cause in such complex cases!
+
+There are good ways to link operations between different services with OpenTelemetry (for example, passing the parent trace id in an inter-service HTTP/gRPC request). It's a bit tedious to do by hand, that's why we're publishing the skill that does that for you.
+
+And totally agreed on config changes and deploy info. We've seen that having good environment and version control (commit hash, file name, line number) tagging is extremely important for root cause analysis, so we go hard on this in the skills.
+
+We also have many infra integrations in our roadmap to make sure that we can deeply analyze the infra/config side of things.",https://news.ycombinator.com/item?id=48198174
+48195021,48198282,48196189,2,comment,A9,2026-05-19T19:33:39Z,0,,"Thank you! Glad you liked the install process :)
+
+I'm afraid a collector and the operator are still the recommended way to go by OpenTelemetry (https://opentelemetry.io/docs/platforms/kubernetes/getting-s...). We're still working on a custom skill for Kubernetes, but the general skill should give you a sane default already.
+
+A good way to start can be to start sending traces/logs directly by instrumenting the service and putting our backend as the collector.
+
+I also help out personally whenever our clients have any questions on setting up the telemetry :)",https://news.ycombinator.com/item?id=48198282
+48195021,48198309,48195923,2,comment,A9,2026-05-19T19:35:42Z,0,,"Good question! We don't have one as of today, just because we're iterating very quickly and a cloud version is the quickest way for us to keep things lean and up-to-date, but we're not far from having one.
+
+Could you please send me an email at ash [at] superlog.sh? I'd love to hear more about your use case - we might have something for you very soon!",https://news.ycombinator.com/item?id=48198309
+48195021,48198440,48195375,2,comment,A9,2026-05-19T19:45:22Z,0,,"Great question! I like to think about this in two ways:
+
+1. Counter-positioning. Most existing tools have invested heavily in their web platforms and compete on their UI/UX. But actually, what matters to our clients is that bugs are fixed. Our top clients would rather never open our tool at all. If our competitors want to beat us, they essentially have to fight against their established business models that hinge on users looking at their browsers.
+
+2. Evals. In order to have the most accurate RCA analysis you need a very good suite of evals: what was the right root cause in this bug? what is the right fix?. We're investing into this heavily, and as one of the early movers we have a big advantage here.
+
+At the same time, I tend to approach strategy with a lot of caution. A lot of the canonical reasoning behind 'startup positioning' is based on extrapolation from trends, but surprisingly few analogies work in economics.
+
+Our focus right now is:
+- talking to our users
+- making sure they have the best experience",https://news.ycombinator.com/item?id=48198440
+48195021,48198526,48196293,2,comment,A9,2026-05-19T19:51:08Z,0,,"Love the analogy! We honestly just wanted to have this product ourselves, and that was our primary motivation behind building it.
+
+I agree with the philosophical principle! If you give a rigid observer an incentive to 'remove bugs', it will happily silence all alerts and report success.
+
+Our goal is to make sure that doesn't happen. The investigation agent is actually a separate agent with a separate goal.
+
+In practice, we rarely see the agent just silencing stuff. When this happens, I get on it and make it an eval case :)",https://news.ycombinator.com/item?id=48198526
+48195021,48199071,48195021,1,comment,A25,2026-05-19T20:27:44Z,0,,">> Superlog scans your codebase and infrastructure to add new alerts, metrics and dashboards, preventing tricky failure modes and observability decay.
+
+This is interesting, and my prior belief here has been that this automates a one time set up, and perhaps a quarterly clean-up or reactive monitoring changes that people do today. Curious what your experience has been - do teams accept these ongoing maintenance PRs at a good rate?
+
+For full disclosure / context: we work in a related space - investigation agents for production issues.",https://news.ycombinator.com/item?id=48199071
+48195021,48199073,48195021,1,comment,A26,2026-05-19T20:27:54Z,0,,"It deleted the codebase, which technically.. is a valid way to get rid of all of the bugs.
+
+I kid, nice work. As others have said, investigation, and understanding ""the why it was originally done that way"", not the patch, is usually the lion share of the work.",https://news.ycombinator.com/item?id=48199073
+48195021,48199083,48198174,3,comment,A24,2026-05-19T20:28:15Z,0,,"Interesting product, but had similar question, i think it will take a little time to be mature for production systems: as what i can see right now is very straightforward, most of the observability providers are doing this, in case you already have the observability stack setup. we currently use Openobserve they have an ai agent that provides correlation, cause and fix for any issues . The real differentiator can be on how accurately you can do the investigations, and how brutally you can steelman the ability for it locate the issue, cause and fix. Good luck on the launch",https://news.ycombinator.com/item?id=48199083
+48195021,48200273,48195021,1,comment,A27,2026-05-19T22:01:36Z,0,,"Before running the install prompt, I’d want to see a dry run: which files it would touch, what telemetry leaves the box, provider calls, and what “high confidence” means. For debugging tools, generating a PR is the easy part; knowing whether it’s grounded in enough evidence is the part I’d worry about.",https://news.ycombinator.com/item?id=48200273
+48195021,48200533,48196293,2,comment,A19,2026-05-19T22:28:05Z,0,,The observer effect is that observing itself modifies the system. This is nothing to do with that.,https://news.ycombinator.com/item?id=48200533
+48195021,48201019,48195021,1,comment,A28,2026-05-19T23:24:12Z,0,,"I would love to use it but the website is down
+
+""Please check your network settings to confirm that your domain has provisioned.
+
+If you are a visitor, please let the owner know you're stuck at the station.""
+
+Would love to learn more and consider being a customer!",https://news.ycombinator.com/item?id=48201019
+48195021,48201046,48195021,1,comment,A29,2026-05-19T23:27:41Z,0,,"Building on the ""investigation > patch"" point — running Claude Code, Codex, and Gemini CLI daily, the pattern I keep noticing is that auto-fix is fine on ""obvious bug, obvious fix"" (off-by-one, null check, missing await, error not propagated). It falls over on ""subtle invariant"" bugs where the existing code is intentionally weird to preserve something non-obvious — the PR looks right and breaks something three modules away.
+
+The tool I'd actually want isn't ""tries harder to fix everything."" It's one that credibly says ""this touches an invariant I can't see — here's what I think might happen, you handle it."" Calibrated humility beats confident patches.
+
+Curious how your high-confidence threshold actually works. Self-reported model certainty (notoriously unreliable), test coverage in the affected area, blast-radius of the change, something else?",https://news.ycombinator.com/item?id=48201046
+48195021,48201255,48195021,1,comment,A30,2026-05-19T23:54:24Z,0,,"Not their fault
+
+Railway their hosting provider is entirely down as well
+
+From https://status.railway.com/
+
+>Identified
+
+>Google Cloud has blocked our account, making some Railway services unavailable. We have escalated this directly with Google. The Railway Platform team has since confirmed access to Google Cloud and is working on restoring access to all workloads. We have access to some of our Google Cloud–hosted infrastructure and are working to restore the rest of the service. We apologize for the disruption.",https://news.ycombinator.com/item?id=48201255
+48195021,48201346,48201019,2,comment,A9,2026-05-20T00:06:30Z,0,,Apologies everyone! indeed our webapp unfortunately went down together with Railway - we're working hard to bring it up,https://news.ycombinator.com/item?id=48201346
+48195021,48201496,48201255,2,comment,A9,2026-05-20T00:25:10Z,0,,"That's true, unfortunately. Very sorry abut this, and it's my fault that we weren't resilient to this failure. We'll be migrating the webapp to a more resilient architecture as a first priority.
+
+The landing page is up again now but unfortunately will have to default to accepting demo requests for now :(",https://news.ycombinator.com/item?id=48201496
+48195021,48204842,48196680,3,comment,A17,2026-05-20T08:49:17Z,0,,"It is a well known phenomenon in haskell or OOP in general that just reading can cause systems to change their execution paths. Which is why it's not sufficient to make write/setters private, but reads/getters too.
+
+However in the case of SuperLog the path to system change is quite direct
+
+""We fix bugs.
+Superlog prepares a resolution PR for every incident. If Confidence Gate fails, it posts findings for the investigating team and pulls in the engineers who can add context.""
+
+The system literally pushes (or Pull requests, whatever, github is dead anyways) a code change.",https://news.ycombinator.com/item?id=48204842
+48195021,48213830,48195021,1,comment,A31,2026-05-20T20:42:37Z,0,,"Congratulations with the launch and it looks good, do you provide any API for other tools to integrate superlog.",https://news.ycombinator.com/item?id=48213830
+48195021,48222652,48195021,1,comment,A32,2026-05-21T13:57:38Z,0,,"Auto-instrumentation is great until you hit cardinality. We turned on auto-traces across our LLM gateway and within a week our trace storage costs were dominated by attribute cardinality from user-id and prompt-text labels. Pulled those out into a separate column store with sampling. Query latency dropped 40x. Curious how Superlog handles attribute cardinality at scale, especially for AI workloads where prompt content is high entropy. The 'installs itself' magic is only useful if it doesn't blow up the bill.",https://news.ycombinator.com/item?id=48222652
+48195021,48238296,48195021,1,comment,A33,2026-05-22T16:42:48Z,0,,Genuine question! What makes this any different than any other thing like it? Why should i use this over something else,https://news.ycombinator.com/item?id=48238296
+49538195,49538195,,0,post,A2,2026-09-02T15:55:14Z,28,Show HN: Aura – a Rust agent that investigates and fixes production incidents,"We run a SaaS that handles petabytes of data. Our SRE team experimented with using claude, openclaw, langchain, etc. within our incident response workflows. We struggled with overflowing context, lethal trifecta vectors, hallucinations, and burned a lot of frontier tokens mostly on easy work. Approval fatigue was a challenge, and we drew a hard line at relaxing permissions in production.
+
+Long story short, we built and open-sourced AURA, a Rust-based harness specifically designed for the type of operations work which routinely involves large volumes of telemetry data and coordinated investigations across many domains of knowledge / state. We have found even on open-weights models, root cause accuracy has been very good, and remediation actions are guarded with human-in-the-loop.
+
+AURA runs from a centralized configuration file where workers are defined and scoped to task domains, (e.g. logging review, metrics analysis, and git/scm related queries). All permissions, tools access, LLM backend(s), worker prompts, and the main coordinator prompt are also defined in code. Permitted tool use is enforced deterministically outside the agent's context, so the agent cannot grant itself capabilities through prompting. AURA also handles the rest of the execution layer, such as human approval for sensitive actions and fault tolerance. A lot of thought went into context window management: large tool outputs and worker responses are persisted to disk and agents are given tools to slice/read as needed.
+
+The project is Apache 2.0. You can install rpm/deb/brew natively or pull the source and build your own. It runs either as an assistant on your workstation, or as a daemon that you can connect to via any OpenAI-compatible frontend. The GitHub repo is here: https://github.com/mezmo/aura/
+
+The whole thing is free/Free. No signups or open core trapdoor.
+
+Demo: We put together an 8-minute video showing a checkout outage resolved by following evidence from several different systems: https://www.youtube.com/watch?v=TERHoRzT8cE
+
+tl;dw: 502s from a checkout service cause Grafana to trigger an incident via PagerDuty. AURA (using DeepSeek-V4-Flash) uses its workers and tools to correctly determine root cause as a memory leak in a downstream service, and attributes the incident to a defect in a recently merged PR. The demo then concludes with a human-gated tool call to GitHub, where AURA documents the exact lines of code that are causing the problem, and recommends a fix. Once the PR is deployed, AURA validates that the errors are clearing and transactions are no longer failing. The whole time, AURA’s leaving an audit trail of OTEL events into Phoenix.
+
+Technical details:
+
+AURA uses an agent coordinator that drafts, executes, and supervises DAG flows through user-defined worker agents to solve complex investigations in parallel. Worker agents are bound to strongly typed durable artifacts used as evidence packets, and the system discourages wasteful recalculation of remote data. AURA also has a powerful header routing system that doesn’t allow the agent to actually touch your keys. HITL interrupts over webhook are first class citizens and have a schema that is easy to adapt to your own workflow. HA deployment options are coming soon.
+
+What’s still rocky:
+
+- We’re currently working on the async input system for when you’re running AURA as a service. Right now the API just accepts a request, and streams messages until the main loop completes. It’s easy to integrate into a workflow, but the logic required winds up being heavier than it ought to be.
+
+- Because there’s no inbound webhook interrupt mechanism, automating AURA for IR requires middleware to invoke it or it needs to poll an MCP for alert escalations.
+
+We’re looking for users, contributors, guidance on where to take this next, or just GitHub stars. Looking forward to reading and responding to feedback here.",https://news.ycombinator.com/item?id=49538195
+49538195,49538964,49538195,1,comment,A3,2026-09-02T16:46:17Z,0,,"This is really a nice tool. For parking oversized tool results on disk, how are you storing them? Is that in flat files by byte-range reads, or embedding a SQLite or RocksDB to manage cached tool outputs?",https://news.ycombinator.com/item?id=49538964
+49538195,49539184,49538964,2,comment,A4,2026-09-02T17:00:43Z,0,,"I'm also one of the people working on this project.
+
+Oversized result artifacts are session-namespaced files cached on disc. Coordinator runs are given a lookup manifest and the internal scratchpad tool can search, grep, etc. to find only the pieces they need with inner loops. This enables a sort of model-driven targeted context engineering.
+
+You can explore the implementation here: https://github.com/mezmo/aura/tree/main/crates/aura/src/scra...",https://news.ycombinator.com/item?id=49539184
+49538195,49548874,49538195,1,comment,A5,2026-09-03T12:01:34Z,0,,"Great looking project! I've been fumbling towards a similar approach in GoLang, http://github.com/ianeff/thump. I like yours better!",https://news.ycombinator.com/item?id=49548874
+49538195,49553711,49548874,2,comment,A4,2026-09-03T17:37:13Z,0,,"I like what you did with the action catalog as a way to express bounded outcomes!
+
+I think the biggest similar concept in our approaches is that operational safety really requires strict determinism in a lot of places. It's not like a coding agent where you can have it write itself shell scripts to get the job done any which way, and it'll probably be fine. So you wind up wrapping the probabilistic agent as a glue point between deterministic steps to get safe, reliable results.
+
+It's great to be able to put automation into those places that would have required a human brain's worth of context before, because you'd never have been able to write a big enough if-case. But you need that deterministic input and outcome on each side to make sure that results are predictable enough that the system doesn't eat it.
+
+<Insert lenghty ranting about ""Go read In Search of Certainty again, Mark Burgess is right"" here>",https://news.ycombinator.com/item?id=49553711
+49538195,49555330,49538195,1,comment,A6,2026-09-03T19:23:42Z,0,,Nice work. The part that collapses in IR agents is the permitted tool use enforced outside the model context.,https://news.ycombinator.com/item?id=49555330
+49538195,49564408,49555330,2,comment,A7,2026-09-04T13:33:52Z,0,,One of the creators of AURA here. We made tool intercept HITL a first class citizen with Webhook support. Its open but powerful enough that slotting in your own governance system shouldn't have much friction. On the AURA side you use glob matches to pick which tools are gated by this hook.,https://news.ycombinator.com/item?id=49564408
+49564895,49564895,,0,post,A1,2026-09-04T14:08:55Z,1,Ask HN: Shift-Left to Reachability-First-How are you surviving AST alert fatigue,,https://news.ycombinator.com/item?id=49564895

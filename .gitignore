@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.DS_Store
+_STATUS.md
+
+# Re-identifies every quote in a corpus. Never commit one.
+*authors.key.json
+corpus/

@@ -1,0 +1,64 @@
+{
+  "tool": "fieldnotes",
+  "version": "0.1.0",
+  "run_at": "2026-09-12T09:37:45.470337+00:00",
+  "command": "python3 fieldnotes.py hn \"alert fatigue\" --since 2023-01-01 --limit 6 --min-length 80 --out example/",
+  "source": "hn",
+  "query": "alert fatigue",
+  "parameters": {
+    "subreddit": null,
+    "since": "2023-01-01",
+    "until": null,
+    "thread_limit": 6,
+    "include_comments": true,
+    "min_length_chars": 80,
+    "min_score": null,
+    "max_depth": null,
+    "pseudonymised": true
+  },
+  "endpoints": [
+    "https://hn.algolia.com/api/v1/search_by_date",
+    "https://hn.algolia.com/api/v1/items/{id}"
+  ],
+  "funnel": [
+    {
+      "stage": "stories matched by search",
+      "items": 6
+    },
+    {
+      "stage": "items retrieved (posts + comments)",
+      "items": 61
+    },
+    {
+      "stage": "items included in corpus",
+      "items": 54
+    }
+  ],
+  "exclusions": [
+    {
+      "reason": "comment shorter than 80 characters",
+      "count": 7
+    }
+  ],
+  "result": {
+    "threads": 6,
+    "items": 54,
+    "posts": 6,
+    "comments": 48,
+    "observed_date_range": {
+      "earliest": "2025-12-25T08:47:04Z",
+      "latest": "2026-09-04T14:08:55Z"
+    }
+  },
+  "caveats": [
+    "Deleted and moderator-removed content is invisible to this method. A thread's most contested contributions are the most likely to be missing.",
+    "Posters are not users. The overwhelming majority of people who read a forum never post, and nothing here represents them.",
+    "Visibility is ranked, not neutral. What a search returns is shaped by the platform's own relevance and score ordering, which correlates with age and engagement rather than with representativeness.",
+    "Self-selection: people post about an experience when it is unusual, unresolved or annoying. Base rates cannot be estimated from this data.",
+    "Identity is unverified. Claimed roles, employers and seniority are claims.",
+    "Hacker News is a single community with a specific demographic — largely English-speaking, technical and US-weighted. Nothing here generalises beyond it.",
+    "The thread limit (6) was reached, so the corpus is truncated: it is the most recent 6 matching threads, not all of them. Raise --limit or narrow the query before treating this as complete coverage.",
+    "Requested items from 2023-01-01 onward, but the earliest item returned is 2025-12-25. The gap is a truncation artefact, not evidence that nothing was posted in between."
+  ],
+  "errors": []
+}
